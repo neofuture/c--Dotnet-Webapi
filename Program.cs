@@ -1,7 +1,5 @@
-// Program.cs
-using Webapi.Libs; // Add this line
+using Webapi.Libs;
 
-using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel;
 using Webapi.Libs.User;

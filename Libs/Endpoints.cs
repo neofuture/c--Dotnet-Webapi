@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc; // Add this line
 using Webapi.Libs.User;
 
 namespace Webapi.Libs {
-    public static class App {
+    public static class Endpoints {
         public static void ConfigureEndpoints(this WebApplication app) {
             app.MapPost("/user/login",
                     async ([FromBody] LoginRequest loginRequest, [FromServices] UserLogin userLogin)

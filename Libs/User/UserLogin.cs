@@ -1,15 +1,16 @@
 using MySql.Data.MySqlClient;
 
 namespace Webapi.Libs.User {
-    public class UserLogin(DatabaseContext _dbContext) {
+    public class UserLogin(DatabaseContext dbContext) {
+        
         public async Task<IResult> LoginAsync(LoginRequest loginRequest) {
-            var user = GetUser(loginRequest.Email, loginRequest.Password);
+            var user = await GetUserAsync(loginRequest.Email, loginRequest.Password);
             return user != null ? Results.Ok(user) : Results.Unauthorized();
         }
 
-        private User? GetUser(string email, string password) {
-            using var connection = _dbContext.GetConnection();
-            connection.Open();
+        private async Task<User?> GetUserAsync(string email, string password) {
+            await using var connection = dbContext.GetConnection();
+            await connection.OpenAsync();
 
             var query = """
                         SELECT id, name, email, password
@@ -18,16 +19,16 @@ namespace Webapi.Libs.User {
                         AND password = @Password
                         """;
 
-            using var command = new MySqlCommand(query, connection);
+            await using var command = new MySqlCommand(query, connection);
             command.Parameters.AddWithValue("@Email", email);
             command.Parameters.AddWithValue("@Password", password);
 
-            using var reader = command.ExecuteReader();
-            if (reader.Read()) {
+            await using var reader = await command.ExecuteReaderAsync();
+            if (await reader.ReadAsync()) {
                 return new User {
-                    Id = reader.GetInt32("Id"),
-                    Email = reader.GetString("Email"),
-                    Password = reader.GetString("Password")
+                    Id = reader.GetInt32(0), // Column index for "Id"
+                    Email = reader.GetString(2), // Column index for "Email"
+                    Password = reader.GetString(3) // Column index for "Password"
                 };
             }
 
