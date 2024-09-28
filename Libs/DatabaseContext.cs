@@ -1,24 +1,19 @@
+using Microsoft.EntityFrameworkCore;
 using MySql.Data.MySqlClient;
+using Webapi.Libs.User;
 
 namespace Webapi.Libs {
-    public class DatabaseContext {
-        private readonly string? _connectionString;
+    public class DatabaseContext : DbContext {
+        private readonly string connectionString;
 
-        public DatabaseContext() {
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json")
-                .Build();
-
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
+        public DatabaseContext(DbContextOptions<DatabaseContext> options, string connectionString) : base(options) {
+            this.connectionString = connectionString;
         }
 
-        public MySqlConnection GetConnection() {
-            if (_connectionString == null) {
-                throw new InvalidOperationException("Connection string is not initialized.");
-            }
+        // public DbSet<User> Users { get; set; }
 
-            return new MySqlConnection(_connectionString);
+        public MySqlConnection GetConnection() {
+            return new MySqlConnection(connectionString);
         }
     }
 }

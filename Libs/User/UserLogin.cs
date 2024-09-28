@@ -1,11 +1,27 @@
 using MySql.Data.MySqlClient;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Text.Json;
 
 namespace Webapi.Libs.User {
-    public class UserLogin(DatabaseContext dbContext) {
-        
+    public class UserLogin {
+        private readonly DatabaseContext dbContext;
+        private readonly string jwtSecret;
+
+        public UserLogin(DatabaseContext dbContext, string jwtSecret) {
+            this.dbContext = dbContext;
+            this.jwtSecret = jwtSecret;
+        }
+
         public async Task<IResult> LoginAsync(LoginRequest loginRequest) {
             var user = await GetUserAsync(loginRequest.Email, loginRequest.Password);
-            return user != null ? Results.Ok(user) : Results.Unauthorized();
+            if (user != null) {
+                var token = GenerateJwtToken(user);
+                return Results.Ok(new { user, token });
+            }
+            var errorResponse = new { error = "Not Authorized" };
+            return Results.Json(errorResponse, statusCode: StatusCodes.Status401Unauthorized);
         }
 
         private async Task<User?> GetUserAsync(string email, string password) {
@@ -33,6 +49,36 @@ namespace Webapi.Libs.User {
             }
 
             return null;
+        }
+
+        private string GenerateJwtToken(User user) {
+            var key = Encoding.ASCII.GetBytes(jwtSecret);
+
+            var payload = new {
+                nameid = user.Id.ToString(),
+                email = user.Email,
+                permissions = new {
+                    first = "yes",
+                    second = "no"
+                },
+                nbf = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds(),
+                exp = new DateTimeOffset(DateTime.UtcNow.AddHours(1)).ToUnixTimeSeconds(),
+                iat = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds()
+            };
+
+            var securityToken = new JwtSecurityToken(
+                claims: null,
+                notBefore: DateTime.UtcNow,
+                expires: DateTime.UtcNow.AddHours(1),
+                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            );
+
+            var token = new JwtSecurityTokenHandler().WriteToken(securityToken);
+            var tokenParts = token.Split('.');
+            var payloadJson = JsonSerializer.Serialize(payload);
+            var payloadBase64 = Base64UrlEncoder.Encode(payloadJson);
+
+            return $"{tokenParts[0]}.{payloadBase64}.{tokenParts[2]}";
         }
     }
 }
