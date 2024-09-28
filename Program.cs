@@ -17,7 +17,7 @@ builder.Services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo { Title
 var jwtSecret = builder.Configuration.GetSection("JwtSettings:Secret").Value;
 
 if (string.IsNullOrEmpty(jwtSecret)) {
-    throw new ArgumentNullException(nameof(jwtSecret), "JWT Secret cannot be null or empty.");
+    throw new ArgumentNullException("JWT Secret cannot be null or empty.");
 }
 
 builder.Services.AddUserLogin(jwtSecret);
