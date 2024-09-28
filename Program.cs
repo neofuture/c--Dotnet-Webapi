@@ -29,10 +29,7 @@ builder.Services.AddSwaggerGen(c =>
 var jwtSecret = builder.Configuration.GetSection("JwtSettings:Secret").Value;
 
 // Register UserLogin with the jwtSecret
-builder.Services.AddScoped<UserLogin>(provider => new UserLogin(
-    provider.GetRequiredService<DatabaseContext>(),
-    jwtSecret
-));
+builder.Services.AddUserLogin(jwtSecret);
 
 var app = builder.Build();
 

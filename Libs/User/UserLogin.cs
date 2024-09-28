@@ -5,14 +5,7 @@ using System.Text;
 using System.Text.Json;
 
 namespace Webapi.Libs.User {
-    public class UserLogin {
-        private readonly DatabaseContext dbContext;
-        private readonly string jwtSecret;
-
-        public UserLogin(DatabaseContext dbContext, string jwtSecret) {
-            this.dbContext = dbContext;
-            this.jwtSecret = jwtSecret;
-        }
+    public class UserLogin(DatabaseContext dbContext, string jwtSecret) {
 
         public async Task<IResult> LoginAsync(LoginRequest loginRequest) {
             var user = await GetUserAsync(loginRequest.Email, loginRequest.Password);
@@ -55,7 +48,7 @@ namespace Webapi.Libs.User {
             var key = Encoding.ASCII.GetBytes(jwtSecret);
 
             var payload = new {
-                nameid = user.Id.ToString(),
+                id = user.Id.ToString(),
                 email = user.Email,
                 permissions = new {
                     first = "yes",
